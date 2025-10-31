@@ -1,0 +1,31 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © Anthony C. https://x.com/anthonycxc
+
+//@version=6
+// ------------------------------------------------------------
+//  Normalized EFI
+//  v1.0.2
+// ------------------------------------------------------------
+indicator(title="Normalized EFI", shorttitle="nEFI", format=format.price, precision=2, timeframe="", timeframe_gaps=true)
+
+// Check for volume data
+var float cumVol = 0.0
+cumVol += nz(volume)
+if barstate.islast and cumVol == 0.0
+    runtime.error("No volume is provided by the data vendor.")
+
+// Inputs
+length = input.int(13, "Smoothing Length", minval=1, tooltip="EMA smoothing length")
+volLen = input.int(30, "Volume EMA Length", minval=1, tooltip="Average volume over N bars for normalization")
+
+// Normalized EFI formula
+// ((Close - Close[1]) / Close[1]) * (Volume / EMA(Volume, N))
+relVolume = volume / ta.ema(volume, volLen)
+priceChangePct = close[1] != 0.0 ? (close - close[1]) / close[1] : 0.0
+efi_norm_raw = priceChangePct * relVolume * 100
+
+// Smooth the normalized EFI with EMA
+efi_norm = ta.ema(efi_norm_raw, length)
+
+// Plot
+plot(efi_norm, title="Normalized EFI", color=color.new(#00D9FF, 50), linewidth=1)
